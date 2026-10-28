@@ -1,0 +1,93 @@
+name: Step 4 # Last step of the exercise
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "reports/**"
+      - "verification/review-evidence.md"
+  workflow_dispatch:
+    inputs:
+      pull-request-number:
+        description: Merged implementation PR number that produced current main
+        type: number
+        required: true
+
+permissions: {}
+concurrency:
+  group: lesson-4
+  cancel-in-progress: false
+env:
+  REVIEW_FILE: .github/steps/x-review.md
+
+jobs:
+  find_exercise:
+    if: >-
+      !github.event.repository.is_template &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'push' || github.event.created == false)
+    permissions:
+      issues: read
+    uses: skills/exercise-toolkit/.github/workflows/find-exercise-issue.yml@v0.9.3
+    with:
+      issue-title-text: "Exercise: Specify an Agentic Data Workflow"
+  check_step_work:
+    needs: [find_exercise]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      checks: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.before || github.sha }}
+          path: baseline
+          persist-credentials: false
+      - uses: ./baseline/.github/actions/grade
+        with:
+          stage: "4"
+          issue-number: ${{ needs.find_exercise.outputs.issue-number }}
+          submission-ref: ${{ github.sha }}
+  post_review_content:
+    needs: [find_exercise, check_step_work]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.before || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          repository: skills/exercise-toolkit
+          path: exercise-toolkit
+          ref: v0.9.3
+          persist-credentials: false
+      - uses: GrantBirki/comment@v2.1.1
+        with:
+          issue-number: ${{ needs.find_exercise.outputs.issue-number }}
+          file: exercise-toolkit/markdown-templates/step-feedback/lesson-review.md
+      - uses: GrantBirki/comment@v2.1.1
+        with:
+          issue-number: ${{ needs.find_exercise.outputs.issue-number }}
+          file: ${{ env.REVIEW_FILE }}
+      - name: Disable final workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow disable "Step 4"
+  finish_exercise:
+    needs: [find_exercise, check_step_work, post_review_content]
+    permissions:
+      contents: write
+      issues: write
+    uses: skills/exercise-toolkit/.github/workflows/finish-exercise.yml@v0.9.3
+    with:
+      issue-url: ${{ needs.find_exercise.outputs.issue-url }}
+      exercise-title: "Specify an Agentic Data Workflow"

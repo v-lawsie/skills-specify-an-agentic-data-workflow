@@ -1,0 +1,80 @@
+name: Step 0 # Start Exercise
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+concurrency:
+  group: start-exercise
+  cancel-in-progress: false
+env:
+  STEP_1_FILE: .github/steps/1-step.md
+
+jobs:
+  first_run:
+    if: "!github.event.repository.is_template"
+    runs-on: ubuntu-latest
+    permissions:
+      issues: read
+    outputs:
+      fresh: ${{ steps.detect.outputs.fresh }}
+    steps:
+      - name: Refuse to overwrite an existing exercise
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          count=$(gh api --paginate "repos/$GH_REPO/issues?state=all&per_page=100" --jq '[.[] | select(.pull_request == null and .title == "Exercise: Specify an Agentic Data Workflow")] | length' | awk '{n += $1} END {print n+0}')
+          if [ "$count" = 0 ]; then
+            echo "fresh=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Exercise already exists; refusing to overwrite the learner's README or lessons."
+          fi
+  start_exercise:
+    if: "!github.event.repository.is_template && needs.first_run.outputs.fresh == 'true'"
+    needs: [first_run]
+    permissions:
+      contents: write
+      actions: write
+      issues: write
+    uses: skills/exercise-toolkit/.github/workflows/start-exercise.yml@v0.9.3
+    with:
+      exercise-title: "Specify an Agentic Data Workflow"
+      intro-message: "Specify Lucerne Publishing's report, delegate its implementation, and independently reconcile the result."
+  post_next_step_content:
+    needs: [start_exercise]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          repository: skills/exercise-toolkit
+          path: exercise-toolkit
+          ref: v0.9.3
+          persist-credentials: false
+      - uses: GrantBirki/comment@v2.1.1
+        with:
+          issue-number: ${{ needs.start_exercise.outputs.issue-number }}
+          file: ${{ env.STEP_1_FILE }}
+          vars: |
+            login: ${{ github.actor }}
+            full_repo_name: ${{ github.repository }}
+      - uses: GrantBirki/comment@v2.1.1
+        with:
+          issue-number: ${{ needs.start_exercise.outputs.issue-number }}
+          file: exercise-toolkit/markdown-templates/step-feedback/watching-for-progress.md
+      - name: Enable first lesson
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable "Step 1"

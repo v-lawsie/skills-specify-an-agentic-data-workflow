@@ -1,0 +1,56 @@
+name: Grade without executing learner code
+description: Run baseline graders and update one bot-owned results comment.
+inputs:
+  stage:
+    description: Exercise step number
+    required: true
+  issue-number:
+    description: Exercise issue number
+    required: true
+  submission-ref:
+    description: Exact commit to inspect as data
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: ${{ inputs.submission-ref }}
+        path: submission
+        persist-credentials: false
+    - uses: actions/checkout@v6
+      with:
+        repository: skills/exercise-toolkit
+        ref: v0.9.3
+        path: exercise-toolkit
+        persist-credentials: false
+    - name: Find this step's results comment
+      id: feedback
+      uses: peter-evans/find-comment@v4
+      with:
+        issue-number: ${{ inputs.issue-number }}
+        comment-author: github-actions[bot]
+        body-includes: "## Step ${{ inputs.stage }} -"
+        direction: last
+    - name: Check specification or submitted artifacts
+      id: grade
+      continue-on-error: true
+      shell: bash
+      env:
+        STAGE: ${{ inputs.stage }}
+        GH_TOKEN: ${{ github.token }}
+        IMPLEMENTATION_PR: ${{ github.event.pull_request.number || github.event.inputs['pull-request-number'] }}
+      run: |
+        python3 -I baseline/.github/scripts/grade_step.py --stage "$STAGE"
+    - name: Update step results
+      uses: GrantBirki/comment@v2.1.1
+      with:
+        issue-number: ${{ inputs.issue-number }}
+        comment-id: ${{ steps.feedback.outputs.comment-id }}
+        edit-mode: replace
+        file: exercise-toolkit/markdown-templates/step-feedback/step-results-table.md
+        vars: ${{ steps.grade.outputs.feedback_vars }}
+    - name: Fail if any check failed
+      if: contains(steps.*.outcome, 'failure')
+      shell: bash
+      run: exit 1

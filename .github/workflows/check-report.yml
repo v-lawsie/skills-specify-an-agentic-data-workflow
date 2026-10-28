@@ -1,0 +1,69 @@
+name: Check report
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+
+permissions: {}
+concurrency:
+  group: report-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  artifacts:
+    name: Generated artifacts
+    if: "!github.event.repository.is_template"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: baseline
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: submission
+          persist-credentials: false
+      - run: python3 -I baseline/.github/scripts/check_submission.py --baseline baseline --submission submission --pr-description
+  evidence:
+    name: Analyst evidence
+    if: "!github.event.repository.is_template"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: baseline
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: submission
+          persist-credentials: false
+      - run: python3 -I baseline/.github/scripts/check_submission.py --baseline baseline --submission submission --evidence --pr-description
+  reproduce:
+    name: Reproduce and test
+    if: "!github.event.repository.is_template"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: baseline
+          persist-credentials: false
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: submission
+          persist-credentials: false
+      - name: Regenerate reports and run implementation tests
+        run: python3 -I baseline/.github/scripts/check_reproduction.py --baseline baseline --submission submission

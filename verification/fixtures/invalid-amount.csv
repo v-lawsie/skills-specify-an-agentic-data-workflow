@@ -1,0 +1,2 @@
+transaction_id,account_id,transaction_date,amount_cents
+BAD001,A100,2026-09-05,12.50

@@ -1,0 +1,56 @@
+name: Step 3
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+
+permissions: {}
+concurrency:
+  group: lesson-3
+  cancel-in-progress: false
+env:
+  STEP_4_FILE: .github/steps/4-step.md
+
+jobs:
+  find_exercise:
+    if: "!github.event.repository.is_template && github.event.pull_request.head.repo.full_name == github.repository"
+    permissions:
+      issues: read
+    uses: skills/exercise-toolkit/.github/workflows/find-exercise-issue.yml@v0.9.3
+    with:
+      issue-title-text: "Exercise: Specify an Agentic Data Workflow"
+  check_step_work:
+    needs: [find_exercise]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: baseline
+          persist-credentials: false
+      - uses: ./baseline/.github/actions/grade
+        with:
+          stage: "3"
+          issue-number: ${{ needs.find_exercise.outputs.issue-number }}
+          submission-ref: ${{ github.event.pull_request.head.sha }}
+  post_next_step_content:
+    needs: [find_exercise, check_step_work]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/advance
+        with:
+          issue-number: ${{ needs.find_exercise.outputs.issue-number }}
+          next-step: "4"
+          content-file: ${{ env.STEP_4_FILE }}

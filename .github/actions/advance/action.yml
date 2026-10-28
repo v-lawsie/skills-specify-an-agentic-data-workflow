@@ -1,0 +1,44 @@
+name: Post the next lesson
+description: Post toolkit transition feedback and enable the next numbered workflow.
+inputs:
+  issue-number:
+    description: Exercise issue number
+    required: true
+  next-step:
+    description: Next step number
+    required: true
+  content-file:
+    description: Next lesson path
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v6
+      with:
+        repository: skills/exercise-toolkit
+        path: exercise-toolkit
+        ref: v0.9.3
+        persist-credentials: false
+    - uses: GrantBirki/comment@v2.1.1
+      with:
+        issue-number: ${{ inputs.issue-number }}
+        file: exercise-toolkit/markdown-templates/step-feedback/step-finished-prepare-next-step.md
+        vars: |
+          next_step_number: ${{ inputs.next-step }}
+    - uses: GrantBirki/comment@v2.1.1
+      with:
+        issue-number: ${{ inputs.issue-number }}
+        file: ${{ inputs.content-file }}
+    - uses: GrantBirki/comment@v2.1.1
+      with:
+        issue-number: ${{ inputs.issue-number }}
+        file: exercise-toolkit/markdown-templates/step-feedback/watching-for-progress.md
+    - name: Enable the next workflow and disable this one
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        CURRENT_STEP: ${{ github.workflow }}
+        NEXT_STEP: ${{ inputs.next-step }}
+      run: |
+        gh workflow enable "Step $NEXT_STEP"
+        gh workflow disable "$CURRENT_STEP"
