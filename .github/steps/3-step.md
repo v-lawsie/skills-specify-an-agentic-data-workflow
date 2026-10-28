@@ -22,7 +22,7 @@ GitHub Copilot can read your specification, write a program, and propose its cha
 
 1. In the issue's **Assignees** field, choose **Copilot**. It will start work and link a pull request. Wait until it says the work is ready, then open that pull request.
 
-   ![Select Copilot in the issue’s Assignees field](../images/create-issue.png)
+   ![Select Copilot in the issue’s Assignees field](https://github.com/v-lawsie/skills-specify-an-agentic-data-workflow/blob/main/.github/images/create-issue.png?raw=true)
 
 <details>
 <summary>Having trouble? 🤷</summary><br/>
