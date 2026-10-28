@@ -2,26 +2,25 @@
 
 ## Purpose
 
-TODO: Explain what the report should show.
+A September net sales customer report to understand how much business each customer generated after returns.
 
 ## Audience
 
-TODO: Explain who the report is for, and what they will use it for.
+For the finance department of a publishing company to discuss the month's trading with account managers, and decide which accounts or unusual entries need follow-up.
 
 ## Inputs
-TODO:
-The data/customer-accounts.csv file contains...
-The data/sales-transactions.csv contains...
+
+The data/customer-accounts.csv file contains customer accounts: their account IDs, account types (Retail, Distributor, or Wholesale), and regions.
+The data/sales-transactions.csv contains sales and returns: each entry's transaction ID, customer account ID, date, and amount.
 
 ## Outputs
 
-TODO: 
-The customer account report will be reports/customer-account-report.csv and should contain...
-The exceptions report will be reports/exceptions.csv and should contain...
+The customer account report will be reports/customer-account-report.csv and should contain every customer, their number of September sales and returns, and their net sales. Include customers with no September activity, with both count and net sales set to zero.
+The exceptions report will be reports/exceptions.csv and should contain sales and returns where there is no customer record in the customer list, so Finance can investigate before attributing them. Keep each entry's original amount and sign; do not guess its customer or silently omit it.
 
 ## Scope
 
-TODO: Explain which month and currency the report should cover.
+The report should cover September only. Amounts are in US cents: 12500 means $125.00, and -2000 means a $20.00 return. Work in cents to keep amounts exact.
 
 ## Human approval
 
