@@ -30,21 +30,21 @@ The business analyst must check and approve the report before the pull request i
 
 ## How to prepare the report
 
-**Reporting period**: TODO: Explain which dates belong in this report.
+**Reporting period**: September 1 through September 30, 2026
 
-**Sales and returns**: TODO: Explain amounts in cents and how to handle returns.
+**Sales and returns**: Subtract returns from sales by keeping their negative amounts. Count a return as an entry, not as a mistake. Keep amounts in US cents.
 
-**Customers**: TODO: Explain how to match customers and include those with no activity.
+**Customers**: Match sales and returns to customers by account ID. Include every customer in the customer report, even those with no September activity.
 
-**Repeated entries**: TODO: Explain when an entry is counted once and when to stop.
+**Repeated entries**: If an entry appears twice with the same transaction ID and identical details, count it only once. If the same transaction ID appears with different details, stop and ask for clarification. Do not choose one version.
 
 ## Unmatched customers
 
-**Unmatched entries**: TODO: Explain what to do when a customer cannot be found.
+**Unmatched entries**: Put entries with unknown customer account IDs in reports/exceptions.csv, keeping their original amounts and signs. Do not guess which customer they belong to or silently discard them.
 
 ## When to stop
 
-**Problems with the files**: TODO: Explain which problems must stop the work rather than be guessed at.
+**Problems with the files**: Stop if an amount or date is unreadable, a required value is missing, or a customer account ID appears more than once in the customer list.
 
 ------------------------------
 
@@ -54,13 +54,13 @@ Enter whole numbers in cents, without dollar signs or commas.
 
 | Account ID | Entry count | Net sales in cents |
 |------------|-------------|--------------------|
-| A100       | TODO        | TODO               |
-| A200       | TODO        | TODO               |
+| A100       | 3        | 18000               |
+| A200       | 2        | 4000               |
 
 
 
 | Check                 | Expected amount in cents |
 |-----------------------|--------------------------|
-| Known customers       | TODO                     |
-| Unmatched customers   | TODO                     |
-| All September entries | TODO                     |
+| Known customers       | 22800                     |
+| Unmatched customers   | 2750                     |
+| All September entries | 25550                     |
